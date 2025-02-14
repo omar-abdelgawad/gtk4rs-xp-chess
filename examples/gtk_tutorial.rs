@@ -5,7 +5,7 @@ use xp_chess::consts::{HEIGHT, WIDTH};
 fn building_window(app: &Application) {
     let window = ApplicationWindow::builder()
         .application(app)
-        .title("First GTK Program")
+        .title("yasser")
         .default_width(HEIGHT)
         .default_height(WIDTH)
         .build();
