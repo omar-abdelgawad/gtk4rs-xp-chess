@@ -1,5 +1,5 @@
 use gtk::prelude::*;
-use gtk::{glib::ExitCode, Application, ApplicationWindow, Button, Grid};
+use gtk::{glib::ExitCode, Application, ApplicationWindow, Button, Grid, Image};
 use xp_chess::consts::{HEIGHT, WIDTH};
 
 fn building_window(app: &Application) {
@@ -12,12 +12,17 @@ fn building_window(app: &Application) {
     let grid = Grid::new();
     grid.set_hexpand(true);
     grid.set_vexpand(true);
-    for row in 0..8 {
-        for col in 0..8 {
+    for row in 1..=8 {
+        for col in 1..=8 {
             let button = Button::new();
             button.set_hexpand(true);
             button.set_vexpand(true);
             button.set_size_request(0, 0); // Allows dynamic resizing
+            button.connect_clicked(move |_| {
+                println!("Button clicked: ({}, {})", row, col);
+            });
+            let image = Image::from_file("./resources/Chess_bdt60.png"); // Replace with your image path
+            button.set_child(Some(&image));
             let is_black = (row + col) % 2 == 1; // Alternating black & white pattern
 
             // Set button color
