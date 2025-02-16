@@ -1,8 +1,7 @@
 use gtk::prelude::*;
 use gtk::{glib::ExitCode, Application, ApplicationWindow, Button, Grid, Image};
 use xp_chess::consts::{HEIGHT, WIDTH};
-
-fn building_window(app: &Application) {
+pub fn building_window(app: &Application) {
     let window = ApplicationWindow::builder()
         .application(app)
         .title("yasser")

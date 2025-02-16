@@ -30,6 +30,9 @@ impl Board {
             turn_player: PieceColor::White,
         }
     }
+    pub fn get_piece(&self, row: usize, col: usize) -> &Piece {
+        &self.board[row * COLS + col]
+    }
     pub fn move_piece(&mut self, from: (usize, usize), to: (usize, usize)) -> () {
         let (from_row, from_col) = from;
         let (to_row, to_col) = to;
@@ -73,10 +76,10 @@ impl Board {
     }
 }
 
-pub enum MoveType {
-    Capture,
-    Move,
-    Castle,
-    EnPassant,
-    Promotion,
-}
+// pub enum MoveType {
+//     Capture,
+//     Move,
+//     Castle,
+//     EnPassant,
+//     Promotion,
+// }
