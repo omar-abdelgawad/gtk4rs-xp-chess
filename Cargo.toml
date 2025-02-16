@@ -5,3 +5,7 @@ edition = "2021"
 
 [dependencies]
 gtk = { version = "0.9.5", package = "gtk4", features = ["v4_6"] }
+
+[profile.release]
+debug = 1
+

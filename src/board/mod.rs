@@ -105,8 +105,7 @@ impl Board {
         let attacking_color = color.opposite();
         for row in 0..ROWS {
             for col in 0..COLS {
-                let piece = self.get_piece(row, col);
-                if piece.color() == Some(attacking_color) {
+                if self.get_piece(row, col).color() == Some(attacking_color) {
                     let legal_moves = self.get_valid_moves_to_consider((row, col));
                     if legal_moves.contains(&king_position) {
                         return true;
@@ -128,6 +127,21 @@ impl Board {
             }
         }
         panic!("King not found");
+    }
+    pub fn is_checkmate(&self) -> bool {
+        let cur_player = self.turn_player;
+        // check that there is not a single legal move for the current player
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                if self.get_piece(row, col).color() == Some(cur_player) {
+                    let legal_moves = self.get_legal_moves((row, col));
+                    if !legal_moves.is_empty() {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
     }
 }
 impl Default for Board {

@@ -1,6 +1,6 @@
 use crate::board::piece::Piece;
 use crate::board::{Board, MoveType};
-use crate::consts::{COLS, GTK_NONE, HEIGHT, ROWS, WIDTH};
+use crate::consts::{BLACK_CSS, COLS, GTK_NONE, HEIGHT, ROWS, WHITE_CSS, WIDTH};
 use glib::clone;
 use gtk::prelude::*;
 use gtk::{glib, Application, ApplicationWindow, Button, Grid};
@@ -38,7 +38,6 @@ fn build_grid(board: Rc<RefCell<Board>>) -> Grid {
     for row in 0..ROWS {
         for col in 0..COLS {
             let cell_button = build_button(row, col, &board, &ui_board_state, &grid);
-            // let cell_button = build_button(row, col, &Piece::Empty(Empty {}));
             grid.attach(&cell_button, col as i32, row as i32, 1, 1);
         }
     }
@@ -82,6 +81,9 @@ fn build_button(
                             ui_move_piece(r, c, row, col, &grid);
                         }
                     }
+                    if board.is_checkmate() {
+                        println!("Checkmate!");
+                    }
                 } else if board.get_piece(row, col).color() == Some(board.turn_player) {
                     ui_board_state.borrow_mut().pressed_piece = Some((row, col));
                     let legal_moves = board.get_legal_moves((row, col));
@@ -95,18 +97,14 @@ fn build_button(
         }
     ));
 
-    let is_black = (row + col) % 2 == 1; // Alternating black & white pattern
-                                         // Set button color
-    let css = if is_black {
-        "button { background-color: #769656; }" // Greenish black square
-    } else {
-        "button { background-color: #eeeed2; }" // Beige white square
-    };
+    let is_black = (row + col) % 2 == 1;
+    let css = if is_black { BLACK_CSS } else { WHITE_CSS };
     let provider = gtk::CssProvider::new();
     provider.load_from_data(css);
 
-    let style_context = cell_button.style_context();
-    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+    cell_button
+        .style_context()
+        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     cell_button
 }
@@ -138,15 +136,13 @@ fn ui_reset_grid_color(grid: &Grid) {
                 .child_at(c as i32, r as i32)
                 .and_downcast::<gtk::Button>()
                 .expect("Failed to get button");
-            let css = if (r + c) % 2 == 1 {
-                "button { background-color: #769656; }" // Greenish black square
-            } else {
-                "button { background-color: #eeeed2; }" // Beige white square
-            };
+            let is_black = (r + c) % 2 == 1;
+            let css = if is_black { BLACK_CSS } else { WHITE_CSS };
             let provider = gtk::CssProvider::new();
             provider.load_from_data(css);
-            let style_context = button.style_context();
-            style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+            button
+                .style_context()
+                .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
         }
     }
 }
@@ -162,8 +158,9 @@ fn highlight_chosen_square(grid: &Grid, row: usize, col: usize) {
     let css = "button { background-color:rgb(47, 0, 255); }";
     let provider = gtk::CssProvider::new();
     provider.load_from_data(css);
-    let style_context = button.style_context();
-    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+    button
+        .style_context()
+        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 fn highlight_squares_to_go_to(grid: &Grid, legal_moves: Vec<(usize, usize)>) {
@@ -175,8 +172,9 @@ fn highlight_squares_to_go_to(grid: &Grid, legal_moves: Vec<(usize, usize)>) {
         let css = "button { background-color: #ff0000; }"; // Red square
         let provider = gtk::CssProvider::new();
         provider.load_from_data(css);
-        let style_context = button.style_context();
-        style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+        button
+            .style_context()
+            .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
 }
 fn ui_promote_pawn(grid: &Grid, row: usize, col: usize, piece_promoted: &Piece) {

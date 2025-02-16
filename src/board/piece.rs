@@ -99,8 +99,7 @@ impl Bishop {
         for (dr, dc) in DIRECTIONS.iter() {
             let mut res_row = row as i32 + dr;
             let mut res_col = col as i32 + dc;
-            while !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32)
-            {
+            while !(!(0..ROWS as i32).contains(&res_row) || !(0..COLS as i32).contains(&res_col)) {
                 let dest_piece = board.get_piece(res_row as usize, res_col as usize);
                 if dest_piece.color() == Some(self.color) {
                     break;
@@ -128,8 +127,7 @@ impl Rook {
         for (dr, dc) in DIRECTIONS.iter() {
             let mut res_row = row as i32 + dr;
             let mut res_col = col as i32 + dc;
-            while !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32)
-            {
+            while !(!(0..ROWS as i32).contains(&res_row) || !(0..COLS as i32).contains(&res_col)) {
                 let dest_piece = board.get_piece(res_row as usize, res_col as usize);
                 if dest_piece.color() == Some(self.color) {
                     break;
@@ -165,8 +163,7 @@ impl Queen {
         for (dr, dc) in DIRECTIONS.iter() {
             let mut res_row = row as i32 + dr;
             let mut res_col = col as i32 + dc;
-            while !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32)
-            {
+            while !(!(0..ROWS as i32).contains(&res_row) || !(0..COLS as i32).contains(&res_col)) {
                 let dest_piece = board.get_piece(res_row as usize, res_col as usize);
                 if dest_piece.color() == Some(self.color) {
                     break;
@@ -203,7 +200,7 @@ impl King {
         for (dr, dc) in DIRECTIONS.iter() {
             let res_row = row as i32 + dr;
             let res_col = col as i32 + dc;
-            if !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32) {
+            if !(!(0..ROWS as i32).contains(&res_row) || !(0..COLS as i32).contains(&res_col)) {
                 let dest_piece = board.get_piece(res_row as usize, res_col as usize);
                 if dest_piece.color() == Some(self.color) {
                     continue;
