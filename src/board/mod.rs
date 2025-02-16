@@ -1,6 +1,6 @@
 pub mod piece;
 use crate::consts::{COLS, ROWS};
-use piece::{piece_from_char, Empty, Piece, PieceColor};
+use piece::{piece_from_char, Empty, Piece, PieceColor, Queen};
 const STARTING_BOARD_STR: [[char; COLS]; ROWS] = [
     ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
     ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
@@ -18,35 +18,37 @@ pub struct Board {
     pub turn_player: PieceColor,
 }
 impl Board {
-    pub fn new() -> Board {
-        let board = STARTING_BOARD_STR
-            .iter()
-            .flatten()
-            .map(|&c| piece_from_char(c))
-            .collect::<Vec<Piece>>()
-            .try_into()
-            .unwrap();
-        Board {
-            board: board,
-            turn_player: PieceColor::White,
-        }
-    }
     pub fn get_piece(&self, row: usize, col: usize) -> &Piece {
         &self.board[row * COLS + col]
     }
     pub fn set_piece(&mut self, row: usize, col: usize, piece: Piece) {
         self.board[row * COLS + col] = piece;
     }
-    pub fn try_move_piece(&mut self, from: (usize, usize), to: (usize, usize)) -> Result<(), ()> {
+    pub fn try_move_piece(
+        &mut self,
+        from: (usize, usize),
+        to: (usize, usize),
+    ) -> Result<MoveType, &str> {
         let legal_moves = self.get_legal_moves(from);
         if legal_moves.contains(&to) {
             self.move_piece(from, to);
-            // self.in_check = self.is_check(self.turn_player);
-            return Ok(());
+            // handle promotion
+            if let Piece::Pawn(p) = self.get_piece(to.0, to.1) {
+                if (p.color == PieceColor::White && to.0 == 0)
+                    || (p.color == PieceColor::Black && to.0 == ROWS - 1)
+                {
+                    let cur_color = p.color;
+                    self.set_piece(to.0, to.1, Piece::Queen(Queen { color: p.color }));
+                    return Ok(MoveType::Promotion(Piece::Queen(Queen {
+                        color: cur_color,
+                    })));
+                }
+            }
+            return Ok(MoveType::Capture);
         }
-        Err(())
+        Err("Invalid move")
     }
-    fn move_piece(&mut self, from: (usize, usize), to: (usize, usize)) -> () {
+    fn move_piece(&mut self, from: (usize, usize), to: (usize, usize)) {
         let (from_row, from_col) = from;
         let (to_row, to_col) = to;
         self.board
@@ -128,11 +130,26 @@ impl Board {
         panic!("King not found");
     }
 }
+impl Default for Board {
+    fn default() -> Self {
+        let board = STARTING_BOARD_STR
+            .iter()
+            .flatten()
+            .map(|&c| piece_from_char(c))
+            .collect::<Vec<Piece>>()
+            .try_into()
+            .unwrap();
+        Board {
+            board,
+            turn_player: PieceColor::White,
+        }
+    }
+}
 
-// pub enum MoveType {
-//     Capture,
-//     Move,
-//     Castle,
-//     EnPassant,
-//     Promotion,
-// }
+pub enum MoveType {
+    Capture,
+    Move,
+    Castle,
+    EnPassant,
+    Promotion(Piece),
+}

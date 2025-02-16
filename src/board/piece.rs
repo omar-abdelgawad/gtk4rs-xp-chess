@@ -28,39 +28,32 @@ impl Pawn {
             PieceColor::White => -1,
             PieceColor::Black => 1,
         };
-        // forward 1 and 2 move logic
-        if !self.has_moved {
-            moves.push(((row as i32 + direction * 2) as usize, col));
+        // just return if at the end of the board
+        if row as i32 + direction < 0 || row as i32 + direction >= ROWS as i32 {
+            return moves;
         }
         let new_row = (row as i32 + direction) as usize;
-        for i in [0, 1, -1] {
+        if board.get_piece(new_row, col).is_empty() {
+            moves.push((new_row, col));
+            let second_row = (new_row as i32 + direction) as usize;
+            if !self.has_moved && board.get_piece(second_row, col).is_empty() {
+                moves.push(((row as i32 + direction * 2) as usize, col));
+            }
+        }
+        for i in [1, -1] {
+            if !(0..COLS as i32).contains(&(col as i32 + i)) {
+                continue;
+            }
             let new_col = (col as i32 + i) as usize;
-            if new_col >= COLS {
-                continue;
+            let dest_piece = board.get_piece(new_row, new_col);
+            if dest_piece.color() == Some(self.color.opposite()) {
+                moves.push((new_row, new_col));
             }
-            if i == 0 && !board.get_piece(new_row, new_col).is_empty() {
-                continue;
-            } else if i == 1 || i == -1 {
-                let dest_piece = board.get_piece(new_row, new_col);
-                if dest_piece.color() != Some(self.color.opposite()) {
-                    continue;
-                }
-            }
-            moves.push((new_row, new_col));
         }
         if let Some(col) = self.can_en_passant_col {
             moves.push(((row as i32 + direction) as usize, col));
         }
-        println!("pawn moves:{:?}", moves);
         moves
-            .iter()
-            .filter(|(r, c)| !(r < &0 || r >= &ROWS || c < &0 || c >= &COLS))
-            .filter(|(r, c)| {
-                let piece = board.get_piece(*r, *c);
-                piece.color() != Some(self.color)
-            })
-            .map(|(r, c)| (*r, *c))
-            .collect()
     }
 }
 #[derive(Debug, Clone, PartialEq)]
@@ -248,10 +241,7 @@ impl Piece {
         }
     }
     pub fn is_empty(&self) -> bool {
-        match self {
-            Piece::Empty(_) => true,
-            _ => false,
-        }
+        matches!(self, Piece::Empty(_))
     }
     pub fn become_moved(&mut self) {
         match self {

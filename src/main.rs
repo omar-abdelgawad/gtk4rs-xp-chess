@@ -10,5 +10,5 @@ fn main() -> ExitCode {
     // application.connect_activate(|_| {});
     let exit_code = application.run();
     println!("closed the application");
-    return exit_code;
+    exit_code
 }

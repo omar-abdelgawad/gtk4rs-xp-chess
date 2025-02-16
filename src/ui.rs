@@ -1,4 +1,5 @@
-use crate::board::Board;
+use crate::board::piece::Piece;
+use crate::board::{Board, MoveType};
 use crate::consts::{COLS, GTK_NONE, HEIGHT, ROWS, WIDTH};
 use glib::clone;
 use gtk::prelude::*;
@@ -14,7 +15,7 @@ pub fn build_ui(app: &Application) {
         .default_width(HEIGHT)
         .default_height(WIDTH)
         .build();
-    let board = Rc::new(RefCell::new(Board::new()));
+    let board = Rc::new(RefCell::new(Board::default()));
     let grid = build_grid(board);
     window.set_child(Some(&grid));
     window.present();
@@ -54,7 +55,7 @@ fn build_button(
     cell_button.set_hexpand(true);
     cell_button.set_vexpand(true);
     cell_button.set_size_request(0, 0); // Allows dynamic resizing
-    if let Some(image) = get_image(&(board_ref_cell.borrow().get_piece(row, col))) {
+    if let Some(image) = get_image(board_ref_cell.borrow().get_piece(row, col)) {
         cell_button.set_child(Some(&image));
     }
     cell_button.connect_clicked(clone!(
@@ -71,17 +72,25 @@ fn build_button(
                 let (r, c) = ui_board_state.borrow().pressed_piece.unwrap();
                 ui_board_state.borrow_mut().pressed_piece = None;
                 let mut board = board_ref_cell.borrow_mut();
-                if let Ok(_) = board.try_move_piece((r, c), (row, col)) {
-                    ui_move_piece(r, c, row, col, &grid);
+                if let Ok(move_type) = board.try_move_piece((r, c), (row, col)) {
+                    match move_type {
+                        MoveType::Promotion(piece_promoted) => {
+                            ui_move_piece(r, c, row, col, &grid);
+                            ui_promote_pawn(&grid, row, col, &piece_promoted);
+                        }
+                        _ => {
+                            ui_move_piece(r, c, row, col, &grid);
+                        }
+                    }
                 } else if board.get_piece(row, col).color() == Some(board.turn_player) {
                     ui_board_state.borrow_mut().pressed_piece = Some((row, col));
                     let legal_moves = board.get_legal_moves((row, col));
-                    higlight_legal_moves(&grid, legal_moves);
+                    higlight_legal_moves(&grid, legal_moves, (row, col));
                 }
             } else {
                 ui_board_state.borrow_mut().pressed_piece = Some((row, col));
                 let legal_moves = board_ref_cell.borrow().get_legal_moves((row, col));
-                higlight_legal_moves(&grid, legal_moves);
+                higlight_legal_moves(&grid, legal_moves, (row, col));
             }
         }
     ));
@@ -141,8 +150,23 @@ fn ui_reset_grid_color(grid: &Grid) {
         }
     }
 }
+fn higlight_legal_moves(grid: &Grid, legal_moves: Vec<(usize, usize)>, from: (usize, usize)) {
+    highlight_chosen_square(grid, from.0, from.1);
+    highlight_squares_to_go_to(grid, legal_moves);
+}
+fn highlight_chosen_square(grid: &Grid, row: usize, col: usize) {
+    let button = grid
+        .child_at(col as i32, row as i32)
+        .and_downcast::<gtk::Button>()
+        .expect("Failed to get button");
+    let css = "button { background-color:rgb(47, 0, 255); }";
+    let provider = gtk::CssProvider::new();
+    provider.load_from_data(css);
+    let style_context = button.style_context();
+    style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
 
-fn higlight_legal_moves(grid: &Grid, legal_moves: Vec<(usize, usize)>) {
+fn highlight_squares_to_go_to(grid: &Grid, legal_moves: Vec<(usize, usize)>) {
     for (r, c) in legal_moves {
         let button = grid
             .child_at(c as i32, r as i32)
@@ -154,4 +178,12 @@ fn higlight_legal_moves(grid: &Grid, legal_moves: Vec<(usize, usize)>) {
         let style_context = button.style_context();
         style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
+}
+fn ui_promote_pawn(grid: &Grid, row: usize, col: usize, piece_promoted: &Piece) {
+    let button = grid
+        .child_at(col as i32, row as i32)
+        .and_downcast::<gtk::Button>()
+        .expect("Failed to get button");
+    let image = get_image(piece_promoted).expect("Failed to get image of a promoted peice");
+    button.set_child(Some(&image));
 }
