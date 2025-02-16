@@ -15,7 +15,7 @@ impl PieceColor {
         }
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Pawn {
     pub color: PieceColor,
     pub has_moved: bool,
@@ -28,17 +28,20 @@ impl Pawn {
             PieceColor::White => -1,
             PieceColor::Black => 1,
         };
+        // forward 1 and 2 move logic
         if !self.has_moved {
             moves.push(((row as i32 + direction * 2) as usize, col));
         }
         let new_row = (row as i32 + direction) as usize;
         for i in [0, 1, -1] {
             let new_col = (col as i32 + i) as usize;
-            if !board.board[new_row * COLS + new_col].is_empty() {
+            if new_col >= COLS {
                 continue;
             }
-            if i == 1 || i == -1 {
-                let dest_piece = &board.board[new_row * COLS + new_col];
+            if i == 0 && !board.get_piece(new_row, new_col).is_empty() {
+                continue;
+            } else if i == 1 || i == -1 {
+                let dest_piece = board.get_piece(new_row, new_col);
                 if dest_piece.color() != Some(self.color.opposite()) {
                     continue;
                 }
@@ -48,19 +51,19 @@ impl Pawn {
         if let Some(col) = self.can_en_passant_col {
             moves.push(((row as i32 + direction) as usize, col));
         }
-        println!("{:?}", moves);
+        println!("pawn moves:{:?}", moves);
         moves
             .iter()
             .filter(|(r, c)| !(r < &0 || r >= &ROWS || c < &0 || c >= &COLS))
             .filter(|(r, c)| {
-                let piece = &board.board[*r * COLS + *c];
+                let piece = board.get_piece(*r, *c);
                 piece.color() != Some(self.color)
             })
             .map(|(r, c)| (*r, *c))
             .collect()
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Knight {
     pub color: PieceColor,
 }
@@ -86,13 +89,13 @@ impl Knight {
             }
         }
         moves.retain(|&(r, c)| {
-            let piece = &board.board[r * COLS + c];
+            let piece = board.get_piece(r, c);
             piece.color() != Some(self.color)
         });
         moves
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Bishop {
     pub color: PieceColor,
 }
@@ -105,7 +108,7 @@ impl Bishop {
             let mut res_col = col as i32 + dc;
             while !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32)
             {
-                let dest_piece = &board.board[res_row as usize * COLS + res_col as usize];
+                let dest_piece = board.get_piece(res_row as usize, res_col as usize);
                 if dest_piece.color() == Some(self.color) {
                     break;
                 }
@@ -120,7 +123,7 @@ impl Bishop {
         moves
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Rook {
     pub color: PieceColor,
     pub has_moved: bool,
@@ -134,7 +137,7 @@ impl Rook {
             let mut res_col = col as i32 + dc;
             while !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32)
             {
-                let dest_piece = &board.board[res_row as usize * COLS + res_col as usize];
+                let dest_piece = board.get_piece(res_row as usize, res_col as usize);
                 if dest_piece.color() == Some(self.color) {
                     break;
                 }
@@ -149,7 +152,7 @@ impl Rook {
         moves
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Queen {
     pub color: PieceColor,
 }
@@ -171,7 +174,7 @@ impl Queen {
             let mut res_col = col as i32 + dc;
             while !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32)
             {
-                let dest_piece = &board.board[res_row as usize * COLS + res_col as usize];
+                let dest_piece = board.get_piece(res_row as usize, res_col as usize);
                 if dest_piece.color() == Some(self.color) {
                     break;
                 }
@@ -186,7 +189,7 @@ impl Queen {
         moves
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct King {
     pub color: PieceColor,
     pub has_moved: bool,
@@ -205,30 +208,24 @@ impl King {
             (1, 1),
         ];
         for (dr, dc) in DIRECTIONS.iter() {
-            let mut res_row = row as i32 + dr;
-            let mut res_col = col as i32 + dc;
-            while !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32)
-            {
-                let dest_piece = &board.board[res_row as usize * COLS + res_col as usize];
+            let res_row = row as i32 + dr;
+            let res_col = col as i32 + dc;
+            if !(res_row < 0 || res_row >= ROWS as i32 || res_col < 0 || res_col >= COLS as i32) {
+                let dest_piece = board.get_piece(res_row as usize, res_col as usize);
                 if dest_piece.color() == Some(self.color) {
-                    break;
+                    continue;
                 }
                 moves.push((res_row as usize, res_col as usize));
-                if !dest_piece.is_empty() {
-                    break;
-                }
-                res_row += dr;
-                res_col += dc;
             }
         }
         // castling is a little bit difficult
         moves
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Empty {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Piece {
     Pawn(Pawn),
     Knight(Knight),

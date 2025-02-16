@@ -1,6 +1,5 @@
 use gtk::prelude::*;
 use gtk::{glib::ExitCode, Application};
-use xp_chess::board::Board;
 use xp_chess::ui::build_ui;
 fn main() -> ExitCode {
     // let mut board = Board::new();

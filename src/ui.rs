@@ -54,7 +54,7 @@ fn build_button(
     cell_button.set_hexpand(true);
     cell_button.set_vexpand(true);
     cell_button.set_size_request(0, 0); // Allows dynamic resizing
-    if let Some(image) = get_image(&(board_ref_cell.borrow().board[row * COLS + col])) {
+    if let Some(image) = get_image(&(board_ref_cell.borrow().get_piece(row, col))) {
         cell_button.set_child(Some(&image));
     }
     cell_button.connect_clicked(clone!(
@@ -67,15 +67,22 @@ fn build_button(
         move |_| {
             println!("Button clicked: ({}, {})", row, col);
             if ui_board_state.borrow().pressed_piece.is_some() {
+                ui_reset_grid_color(&grid);
                 let (r, c) = ui_board_state.borrow().pressed_piece.unwrap();
-                let mut board = board_ref_cell.borrow_mut();
-                ui_move_piece(r, c, row, col, &mut board, &grid);
                 ui_board_state.borrow_mut().pressed_piece = None;
+                let mut board = board_ref_cell.borrow_mut();
+                if let Ok(_) = board.try_move_piece((r, c), (row, col)) {
+                    ui_move_piece(r, c, row, col, &grid);
+                } else if board.get_piece(row, col).color() == Some(board.turn_player) {
+                    ui_board_state.borrow_mut().pressed_piece = Some((row, col));
+                    let legal_moves = board.get_legal_moves((row, col));
+                    higlight_legal_moves(&grid, legal_moves);
+                }
             } else {
                 ui_board_state.borrow_mut().pressed_piece = Some((row, col));
+                let legal_moves = board_ref_cell.borrow().get_legal_moves((row, col));
+                higlight_legal_moves(&grid, legal_moves);
             }
-            let to_print = board_ref_cell.borrow().board[row * COLS + col].is_empty();
-            println!("{to_print}");
         }
     ));
 
@@ -94,9 +101,7 @@ fn build_button(
 
     cell_button
 }
-fn ui_move_piece(r1: usize, c1: usize, r2: usize, c2: usize, board: &mut Board, grid: &Grid) {
-    board.move_piece((r1, c1), (r2, c2));
-
+fn ui_move_piece(r1: usize, c1: usize, r2: usize, c2: usize, grid: &Grid) {
     // Get buttons at source and destination positions
     let button1 = grid
         .child_at(c1 as i32, r1 as i32)
@@ -107,29 +112,46 @@ fn ui_move_piece(r1: usize, c1: usize, r2: usize, c2: usize, board: &mut Board, 
         .and_downcast::<gtk::Button>()
         .expect("Failed to get button2");
 
-    // Get new images based on board state
-    let piece1 = board.get_piece(r1, c1);
-    let piece2 = board.get_piece(r2, c2);
-
-    let image1 = get_image(piece1);
-    let image2 = get_image(piece2);
     let image1 = button1
         .child()
         .and_then(|child| child.downcast_ref::<gtk::Image>().cloned());
-    let image2 = button2
-        .child()
-        .and_then(|child| child.downcast_ref::<gtk::Image>().cloned());
-    println!("{:?} {:?}", image1, image2);
-    // Update buttons with new images
-    // if let Some(image) = image1 {
-    //     button1.set_child(Some(&image));
-    // } else {
-    //     button1.set_child(GTK_NONE);
-    // }
     button1.set_child(GTK_NONE);
     if let Some(image) = image1 {
         button2.set_child(Some(&image));
     } else {
         button2.set_child(GTK_NONE);
+    }
+}
+fn ui_reset_grid_color(grid: &Grid) {
+    for r in 0..ROWS {
+        for c in 0..COLS {
+            let button = grid
+                .child_at(c as i32, r as i32)
+                .and_downcast::<gtk::Button>()
+                .expect("Failed to get button");
+            let css = if (r + c) % 2 == 1 {
+                "button { background-color: #769656; }" // Greenish black square
+            } else {
+                "button { background-color: #eeeed2; }" // Beige white square
+            };
+            let provider = gtk::CssProvider::new();
+            provider.load_from_data(css);
+            let style_context = button.style_context();
+            style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+        }
+    }
+}
+
+fn higlight_legal_moves(grid: &Grid, legal_moves: Vec<(usize, usize)>) {
+    for (r, c) in legal_moves {
+        let button = grid
+            .child_at(c as i32, r as i32)
+            .and_downcast::<gtk::Button>()
+            .expect("Failed to get button");
+        let css = "button { background-color: #ff0000; }"; // Red square
+        let provider = gtk::CssProvider::new();
+        provider.load_from_data(css);
+        let style_context = button.style_context();
+        style_context.add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
 }
