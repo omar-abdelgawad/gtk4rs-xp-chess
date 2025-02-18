@@ -22,7 +22,11 @@ pub struct Pawn {
     pub can_en_passant_col: Option<usize>,
 }
 impl Pawn {
-    pub fn moves_to_consider(&self, row: usize, col: usize, board: &Board) -> Vec<(usize, usize)> {
+    pub fn moves_to_consider(
+        &self,
+        (row, col): (usize, usize),
+        board: &Board,
+    ) -> Vec<(usize, usize)> {
         let mut moves = vec![];
         let direction: i32 = match self.color {
             PieceColor::White => -1,
@@ -61,7 +65,11 @@ pub struct Knight {
     pub color: PieceColor,
 }
 impl Knight {
-    pub fn moves_to_consider(&self, row: usize, col: usize, board: &Board) -> Vec<(usize, usize)> {
+    pub fn moves_to_consider(
+        &self,
+        (row, col): (usize, usize),
+        board: &Board,
+    ) -> Vec<(usize, usize)> {
         let (row, col) = (row as i32, col as i32);
         let mut moves = vec![];
         const DIRECTIONS: [(i32, i32); 8] = [
@@ -93,7 +101,11 @@ pub struct Bishop {
     pub color: PieceColor,
 }
 impl Bishop {
-    pub fn moves_to_consider(&self, row: usize, col: usize, board: &Board) -> Vec<(usize, usize)> {
+    pub fn moves_to_consider(
+        &self,
+        (row, col): (usize, usize),
+        board: &Board,
+    ) -> Vec<(usize, usize)> {
         let mut moves = vec![];
         const DIRECTIONS: [(i32, i32); 4] = [(-1, -1), (-1, 1), (1, -1), (1, 1)];
         for (dr, dc) in DIRECTIONS.iter() {
@@ -121,7 +133,11 @@ pub struct Rook {
     pub has_moved: bool,
 }
 impl Rook {
-    pub fn moves_to_consider(&self, row: usize, col: usize, board: &Board) -> Vec<(usize, usize)> {
+    pub fn moves_to_consider(
+        &self,
+        (row, col): (usize, usize),
+        board: &Board,
+    ) -> Vec<(usize, usize)> {
         let mut moves = vec![];
         const DIRECTIONS: [(i32, i32); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
         for (dr, dc) in DIRECTIONS.iter() {
@@ -148,7 +164,11 @@ pub struct Queen {
     pub color: PieceColor,
 }
 impl Queen {
-    pub fn moves_to_consider(&self, row: usize, col: usize, board: &Board) -> Vec<(usize, usize)> {
+    pub fn moves_to_consider(
+        &self,
+        (row, col): (usize, usize),
+        board: &Board,
+    ) -> Vec<(usize, usize)> {
         let mut moves = vec![];
         const DIRECTIONS: [(i32, i32); 8] = [
             (-1, 0),
@@ -185,7 +205,11 @@ pub struct King {
     pub has_moved: bool,
 }
 impl King {
-    pub fn moves_to_consider(&self, row: usize, col: usize, board: &Board) -> Vec<(usize, usize)> {
+    pub fn moves_to_consider(
+        &self,
+        (row, col): (usize, usize),
+        board: &Board,
+    ) -> Vec<(usize, usize)> {
         let mut moves = vec![];
         const DIRECTIONS: [(i32, i32); 8] = [
             (-1, -1),

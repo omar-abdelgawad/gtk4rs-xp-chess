@@ -70,11 +70,11 @@ impl Board {
         }
         match piece {
             Piece::Empty(_) => vec![],
-            Piece::Pawn(p) => p.moves_to_consider(from_row, from_col, self),
-            Piece::Knight(k) => k.moves_to_consider(from_row, from_col, self),
-            Piece::Bishop(b) => b.moves_to_consider(from_row, from_col, self),
-            Piece::Rook(r) => r.moves_to_consider(from_row, from_col, self),
-            Piece::Queen(q) => q.moves_to_consider(from_row, from_col, self),
+            Piece::Pawn(p) => p.moves_to_consider((from_row, from_col), self),
+            Piece::Knight(k) => k.moves_to_consider((from_row, from_col), self),
+            Piece::Bishop(b) => b.moves_to_consider((from_row, from_col), self),
+            Piece::Rook(r) => r.moves_to_consider((from_row, from_col), self),
+            Piece::Queen(q) => q.moves_to_consider((from_row, from_col), self),
             Piece::King(k) => {
                 // can't move to a square with a friendly piece
                 // can't castle if it has moved
@@ -82,7 +82,7 @@ impl Board {
                 // can't castle if there are pieces between the king and rook
                 // can't castle if the king is in check
                 // can't castle if the king moves through check
-                k.moves_to_consider(from_row, from_col, self)
+                k.moves_to_consider((from_row, from_col), self)
             }
         }
     }
